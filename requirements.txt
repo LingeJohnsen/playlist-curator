@@ -1,3 +1,4 @@
 pandas==2.2.3
 python-dotenv==1.0.1
 spotipy==2.24.0
+weaviate-client==4.11.0

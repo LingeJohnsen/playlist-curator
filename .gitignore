@@ -10,3 +10,10 @@ venv/
 
 # Caches
 .cache
+
+# Vector Store
+raft/
+*.db
+*.hierarchy
+*.flag
+*.state

@@ -1,16 +1,23 @@
+from dotenv import load_dotenv
 import numpy as np
+import os
 import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from typing import Any, Dict, List
 
+load_dotenv()
+
+CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
+CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
+
 class SpotifyClient:
 
-    def __init__(self, client_id: str, client_secret: str, verbose: int=1):
+    def __init__(self, verbose: int=1):
 
         auth_manager = SpotifyClientCredentials(
-            client_id=client_id, 
-            client_secret=client_secret
+            client_id=CLIENT_ID, 
+            client_secret=CLIENT_SECRET
         )
         self.client = spotipy.Spotify(auth_manager=auth_manager)
         self.verbose = verbose
@@ -20,6 +27,7 @@ class SpotifyClient:
         of dictionaries"""
 
         song_data = []
+        failed_tracks = []
         next_batch = True # Dummy value to start loop
         offset = 0
         limit = 100
@@ -35,12 +43,18 @@ class SpotifyClient:
             for i, track in enumerate(batch["items"]):
                 if self.verbose: 
                     print(f"Getting track data for track {i+1}/{len(batch['items'])}...")
-                self._get_track_data(track["track"], song_data)
+                try:
+                    self._get_track_data(track["track"], song_data)
+                except Exception as e:
+                    print(f'Failed to get all track data for {track}')
+                    failed_tracks.append(track)
+                    print("Continuing on to next track...")
             if batch["next"] is None:
                 next_batch = False
             batch_n += 1
             offset += limit
         
+        print(f"*********\nFinished getting playlist data for {playlist_id}. Failed to extract {len(failed_tracks)} songs.\n*********")
         return song_data
 
     def _get_track_data(
