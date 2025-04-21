@@ -3,21 +3,24 @@ import numpy as np
 import os
 import pandas as pd
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOAuth
 from typing import Any, Dict, List
 
 load_dotenv()
 
 CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
+REDIRECT_URI = os.getenv("SPOTIPY_REDIRECT_URI")
 
 class SpotifyClient:
 
     def __init__(self, verbose: int=1):
 
-        auth_manager = SpotifyClientCredentials(
+        auth_manager = SpotifyOAuth(
             client_id=CLIENT_ID, 
-            client_secret=CLIENT_SECRET
+            client_secret=CLIENT_SECRET,
+            redirect_uri = REDIRECT_URI,
+            scope="playlist-modify-public"
         )
         self.client = spotipy.Spotify(auth_manager=auth_manager)
         self.verbose = verbose
@@ -33,7 +36,7 @@ class SpotifyClient:
         limit = 100
         batch_n = 1
         while next_batch:
-            if self.verbose:
+            if self.verbose > 0:
                 print(f"Getting batch {batch_n} based on offset {offset} and limit {limit}...")
             batch = self.client.playlist_tracks(
                 playlist_id,
@@ -41,7 +44,7 @@ class SpotifyClient:
                 offset=offset
             )
             for i, track in enumerate(batch["items"]):
-                if self.verbose: 
+                if self.verbose > 0: 
                     print(f"Getting track data for track {i+1}/{len(batch['items'])}...")
                 try:
                     self._get_track_data(track["track"], song_data)
@@ -66,7 +69,7 @@ class SpotifyClient:
         data["duration_ms"] = track["duration_ms"]
         data["track_id"] = track["id"]
         data["track_name"] = track["name"]
-        if self.verbose:
+        if self.verbose > 0:
             print(f"Track name: {track['name']}")
             print("Getting audio features...")
 
@@ -83,7 +86,7 @@ class SpotifyClient:
         data["valence"] = audio_features["valence"]
         data["tempo"] = audio_features["tempo"]
 
-        if self.verbose:
+        if self.verbose > 0:
             print(f"Getting audio analysis data...")
         self._process_audio_analysis(track["id"], "bars", data)
         self._process_audio_analysis(track["id"], "beats", data)
@@ -91,7 +94,7 @@ class SpotifyClient:
         self._process_audio_analysis(track["id"], "segments", data)
         self._process_audio_analysis(track["id"], "tatums", data)
 
-        if self.verbose:
+        if self.verbose > 0:
             print("Track features gather done!")
         data_list.append(data)
 

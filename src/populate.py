@@ -1,8 +1,8 @@
-from dataset_generation import create_dataset
+from utils.dataset_generation import create_dataset
 from dotenv import load_dotenv
 import os
 from typing import List
-from weaviate_client import WeaviateClient
+from clients.weaviate_client import WeaviateClient
 
 load_dotenv()
 
@@ -13,19 +13,28 @@ PLAYLISTS = [
     os.getenv("NOT_JAZZ_ID")
 ]
 
-def populate(playlists: List[str]) -> None:
+def populate(playlist: List[str] | str, jazzy: bool) -> None:
 
-    dataset = create_dataset(playlists)
+    if not isinstance(playlist, list):
+        playlist = [playlist]
 
-    weaviate_client = WeaviateClient("./vector_store/")
+    dataset = create_dataset(playlist)
+
+    weaviate_client = WeaviateClient()
 
     if not weaviate_client.client.collections.exists("tracks"):
-        weaviate_client.create_collection("tracks")
+        weaviate_client.create_collection("tracks", vector_name="spotify_tracks")
     
-    weaviate_client.populate_collection("tracks", dataset)
+    weaviate_client.populate_collection("tracks", jazzy, dataset)
 
 
 if __name__ == "__main__":
     print(f"Start populating Weaviate with data from playlists {PLAYLISTS}...")
-    populate(PLAYLISTS)
+    for playlist in PLAYLISTS:
+        if playlist == os.getenv("JAZZ_ID"):
+            print("Populating jazzy dataset...")
+            populate(playlist, jazzy=True)
+        elif playlist == os.getenv("NOT_JAZZ_ID"):
+            print("Populating non-jazzy dataset...")
+            populate(playlist, jazzy=False)
     print("Population done!")

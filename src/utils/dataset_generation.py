@@ -1,9 +1,9 @@
-from spotify_client import SpotifyClient
+from clients.spotify_client import SpotifyClient
 from typing import Any, Dict, List
 
-def create_vector_data(playlist_id: str) -> List[Dict[str, Any]]:
+def create_vector_data(playlist_id: str, verbose: int=0) -> List[Dict[str, Any]]:
 
-    spotify = SpotifyClient(verbose=False)
+    spotify = SpotifyClient(verbose=verbose)
 
     dataset = spotify.get_playlist_data(playlist_id)
     vector_dataset = []
