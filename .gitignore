@@ -1,0 +1,19 @@
+*.env
+
+*__pycache__
+
+# Virtual environment
+venv/
+
+# Notebooks
+*.ipynb
+
+# Caches
+.cache
+
+# Vector Store
+raft/
+*.db
+*.hierarchy
+*.flag
+*.state

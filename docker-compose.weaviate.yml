@@ -1,0 +1,26 @@
+---
+services:
+  weaviate:
+    command:
+    - --host
+    - 0.0.0.0
+    - --port
+    - '${WEAVIATE_HTTP_PORT}'
+    - --scheme
+    - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.30.0
+    ports:
+    - ${WEAVIATE_HTTP_PORT}:${WEAVIATE_HTTP_PORT}
+    - ${WEAVIATE_GRPC_PORT}:${WEAVIATE_GRPC_PORT}
+    volumes:
+    - weaviate_data:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_API_BASED_MODULES: 'true'
+      CLUSTER_HOSTNAME: 'node1'
+volumes:
+  weaviate_data:
+...
