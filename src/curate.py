@@ -21,7 +21,7 @@ def run():
         os.getenv("NEW_MUSIC_FRIDAY_FRANCE"),
     ]
 
-    client = CurationClient(threshold=0.7)
+    client = CurationClient(threshold=0.7, max_distance=0.00005, match_limit=10, verbose=1)
 
     results = client.curate(playlists)
     client.push_to_spotify(results)

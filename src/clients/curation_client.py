@@ -13,12 +13,16 @@ load_dotenv()
 
 class CurationClient:
 
-    def __init__(self, match_limit=20, threshold=0.5, verbose=0):
+    def __init__(
+        self, match_limit=20, threshold=0.5, 
+        max_distance=0.0001, min_matches=5, verbose=0):
 
         self.wviate = WeaviateClient()
         self.spotify = SpotifyClient()
         self.match_limit = match_limit
         self.threshold = threshold
+        self.max_distance = max_distance
+        self.min_matches = min_matches
         self.verbose = verbose
 
 
@@ -58,7 +62,7 @@ class CurationClient:
         res = []
         for match in matches:
             if self.verbose > 0:
-                print(f"Processing {match[0]}...")
+                print(f"Processing {match[0]} with distance {sorted([m.metadata.distance for m in match[1]], reverse=True)}...")
             prop = self.process_matches(match)
             if self.verbose > 0:
                 print(f"Match prop: {prop}")
@@ -72,11 +76,19 @@ class CurationClient:
     def process_matches(self, matches: Tuple[str, List[weaviate.collections.classes.internal.Object]]) -> Dict[str, float]:
 
         id = matches[0]
-        query_res = matches[1]
+        query_res = [m for m in matches[1] if m.metadata.distance < self.max_distance]
+        if len(query_res) == 0:
+            if self.verbose > 0:
+                print(f"All results from {id} too far distance")
+            return {id: 0.0}
+        if self.verbose > 0:
+            print(f"{len(query_res)} matches within distance for {id}")
+        if len(query_res) < self.min_matches:
+            return {id: 0.0}
         jazzy_count = 0
         for res in query_res:
             jazzy_count += res.properties["jazzy"]
-        jazzy_proportion = jazzy_count/self.match_limit
+        jazzy_proportion = jazzy_count/len(query_res)
         return {id: jazzy_proportion}
     
     def push_to_spotify(self, tracks: List[Dict[str, float]]):
